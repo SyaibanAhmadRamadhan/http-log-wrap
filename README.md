@@ -10,7 +10,7 @@
 ## Installation
 To install `http-log-wrap`, use the following Go command:
 ```shell3
-go get github.com/SyaibanAhmadRamadhan/http-log-wrap@v1.240902.0919
+go get github.com/SyaibanAhmadRamadhan/http-log-wrap@v1.240903.1054
 ```
 
 ## Tag Versioning Example: `v1.231215.2307`

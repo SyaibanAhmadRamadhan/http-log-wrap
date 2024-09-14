@@ -49,6 +49,7 @@ func HttpOtel(next http.Handler, opts ...OptHttpOtelFunc) http.Handler {
 
 		if r.Header.Get("X-Correlation-ID") != "" {
 			span.SetAttributes(attribute.String("http.request.header.x_correlation_id", r.Header.Get("X-Correlation-ID")))
+			span.SetAttributes(attribute.String("correlation_id", r.Header.Get("X-Correlation-ID")))
 			ctx = context.WithValue(ctx, CorrelationIDKey, r.Header.Get("X-Correlation-ID"))
 			r = r.WithContext(ctx)
 		}

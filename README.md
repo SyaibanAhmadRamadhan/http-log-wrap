@@ -1,5 +1,5 @@
-# http-log-wrap
-`http-log-wrap` is a Go library designed to wrap the `http.ResponseWriter` with enhanced logging capabilities. This library provides a middleware for logging HTTP request and response details, including custom query parameters, request bodies, and response bodies. It also supports OpenTelemetry for advanced observability and includes middleware for handling standard Bearer token JWT authentication.
+# http-wrapper
+`http-wrapper` is a Go library designed to wrap the `http.ResponseWriter` with enhanced logging capabilities. This library provides a middleware for logging HTTP request and response details, including custom query parameters, request bodies, and response bodies. It also supports OpenTelemetry for advanced observability and includes middleware for handling standard Bearer token JWT authentication.
 
 ## Features 
 - **Request Logging**: Logs HTTP request details including query parameters and request body.
@@ -8,9 +8,9 @@
 - **OpenTelemetry Support**: Integrates with OpenTelemetry for tracing and metrics.
 
 ## Installation
-To install `http-log-wrap`, use the following Go command:
+To install `http-wrapper`, use the following Go command:
 ```shell3
-go get github.com/SyaibanAhmadRamadhan/http-log-wrap@v1.240914.1053
+go get github.com/SyaibanAhmadRamadhan/http-wrapper@v1.241004.0054
 ```
 
 ## Tag Versioning Example: `v1.231215.2307`
@@ -23,7 +23,8 @@ v1.yearMonthDate.HourMinute
 - `date`: Two-digit day of the month (e.g., 15).
 - `HourMinute`: Time of release in 24-hour format, combined as HHMM (e.g., 2307 for 11:07 PM).
 
-
+## noted
+When using OpenTelemetry functions, avoid overwriting the request context with the new context created by otel.Tracer (for example, using r = r.WithContext(newCtxSpan)). Make sure to always maintain the original request context so that the values and information associated with that context remain accessible.
 
 ## Contact
 For questions or support, please contact ibanrama29@gmail.com

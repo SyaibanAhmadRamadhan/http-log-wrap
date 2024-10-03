@@ -1,4 +1,4 @@
-package httplogwrap
+package whttp
 
 import (
 	"bytes"

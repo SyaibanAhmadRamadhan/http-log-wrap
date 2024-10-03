@@ -19,32 +19,32 @@ import (
 	"strings"
 )
 
-type OptHttpOtelFunc func(*opentelemetry)
+type OptHttpOtelFunc func(*Opentelemetry)
 
 func WithPropagator() OptHttpOtelFunc {
-	return func(o *opentelemetry) {
+	return func(o *Opentelemetry) {
 		o.propagators = otel.GetTextMapPropagator()
 	}
 }
 
 func WithRecoverMode(logStdOutPanic bool) OptHttpOtelFunc {
-	return func(o *opentelemetry) {
+	return func(o *Opentelemetry) {
 		o.logStdOutPanic = logStdOutPanic
 		o.recover = true
 	}
 }
 
-type opentelemetry struct {
+type Opentelemetry struct {
 	propagators    propagation.TextMapPropagator
 	decoderSchema  *schema.Decoder
 	recover        bool
 	logStdOutPanic bool
 }
 
-func NewOtel(opts ...OptHttpOtelFunc) *opentelemetry {
+func NewOtel(opts ...OptHttpOtelFunc) *Opentelemetry {
 	s := schema.NewDecoder()
 	s.SetAliasTag("json")
-	o := &opentelemetry{
+	o := &Opentelemetry{
 		decoderSchema: s,
 	}
 
@@ -55,7 +55,7 @@ func NewOtel(opts ...OptHttpOtelFunc) *opentelemetry {
 	return o
 }
 
-func (o *opentelemetry) Trace(next http.HandlerFunc, opts ...Option) http.HandlerFunc {
+func (o *Opentelemetry) Trace(next http.HandlerFunc, opts ...Option) http.HandlerFunc {
 
 	return func(writer http.ResponseWriter, request *http.Request) {
 
@@ -132,7 +132,7 @@ func (o *opentelemetry) Trace(next http.HandlerFunc, opts ...Option) http.Handle
 	}
 }
 
-func (o *opentelemetry) BindBodyRequest(w http.ResponseWriter, r *http.Request, v interface{}) bool {
+func (o *Opentelemetry) BindBodyRequest(w http.ResponseWriter, r *http.Request, v interface{}) bool {
 	ctx := r.Context()
 
 	body, err := io.ReadAll(r.Body)
@@ -161,7 +161,7 @@ func (o *opentelemetry) BindBodyRequest(w http.ResponseWriter, r *http.Request, 
 	return true
 }
 
-func (o *opentelemetry) WriteJson(w http.ResponseWriter, r *http.Request, code int, v interface{}) {
+func (o *Opentelemetry) WriteJson(w http.ResponseWriter, r *http.Request, code int, v interface{}) {
 	ctx := r.Context()
 
 	respByte, err := json.Marshal(v)
@@ -176,7 +176,7 @@ func (o *opentelemetry) WriteJson(w http.ResponseWriter, r *http.Request, code i
 	w.Write(respByte)
 }
 
-func (o *opentelemetry) BindQueryParam(w http.ResponseWriter, r *http.Request, v interface{}) bool {
+func (o *Opentelemetry) BindQueryParam(w http.ResponseWriter, r *http.Request, v interface{}) bool {
 	ctx := r.Context()
 
 	if err := ParseQueryParam(r); err != nil {
@@ -202,7 +202,7 @@ func (o *opentelemetry) BindQueryParam(w http.ResponseWriter, r *http.Request, v
 }
 
 // Err handles error responses by writing a JSON error message to the response writer.
-func (o *opentelemetry) Err(w http.ResponseWriter, r *http.Request, code int, err error, messages ...string) {
+func (o *Opentelemetry) Err(w http.ResponseWriter, r *http.Request, code int, err error, messages ...string) {
 	ctx := r.Context()
 
 	setAttr(ctx, semconv.ExceptionMessage(err.Error()))
@@ -253,7 +253,7 @@ func (o *opentelemetry) Err(w http.ResponseWriter, r *http.Request, code int, er
 	w.Write(errMsgByte)
 }
 
-func (o *opentelemetry) recoverHandler(writer http.ResponseWriter, request *http.Request, span trace.Span, r any) {
+func (o *Opentelemetry) recoverHandler(writer http.ResponseWriter, request *http.Request, span trace.Span, r any) {
 	span.SetAttributes(
 		semconv.ExceptionTypeKey.String(fmt.Sprintf("%T", r)),
 		semconv.ExceptionMessageKey.String(fmt.Sprintf("%v", r)),

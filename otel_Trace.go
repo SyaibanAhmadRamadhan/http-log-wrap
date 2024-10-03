@@ -6,7 +6,10 @@ import (
 	errors "errors"
 	"fmt"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-playground/locales/en"
+	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
+	en_translations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/gorilla/schema"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -15,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"io"
 	"net/http"
+	"reflect"
 	"runtime/debug"
 	"strings"
 )
@@ -34,11 +38,40 @@ func WithRecoverMode(logStdOutPanic bool) OptHttpOtelFunc {
 	}
 }
 
+func WithValidator(v *validator.Validate, t ut.Translator) OptHttpOtelFunc {
+	return func(opentelemetry *Opentelemetry) {
+		if v == nil {
+			v = validator.New()
+			v.RegisterTagNameFunc(func(field reflect.StructField) string {
+				return field.Tag.Get("json")
+			})
+		}
+
+		if t == nil {
+			english := en.New()
+			uni := ut.New(english, english)
+			trans, _ := uni.GetTranslator("en")
+			_ = en_translations.RegisterDefaultTranslations(v, trans)
+			t = trans
+		}
+
+		opentelemetry.validator = &validate{
+			v:     v,
+			trans: t,
+		}
+	}
+}
+
+type validate struct {
+	v     *validator.Validate
+	trans ut.Translator
+}
 type Opentelemetry struct {
 	propagators    propagation.TextMapPropagator
 	decoderSchema  *schema.Decoder
 	recover        bool
 	logStdOutPanic bool
+	validator      *validate
 }
 
 func NewOtel(opts ...OptHttpOtelFunc) *Opentelemetry {
@@ -158,6 +191,16 @@ func (o *Opentelemetry) BindBodyRequest(w http.ResponseWriter, r *http.Request, 
 		o.Err(w, r, http.StatusUnprocessableEntity, StackTrace(err))
 		return false
 	}
+
+	if o.validator != nil {
+		err = o.validator.v.Struct(v)
+		if err != nil {
+			setAttr(ctx, semconv.ErrorTypeKey.String("validation_error"))
+			o.Err(w, r, http.StatusBadRequest, err)
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -193,11 +236,14 @@ func (o *Opentelemetry) BindQueryParam(w http.ResponseWriter, r *http.Request, v
 
 	r.Form = nil
 
-	//err := h.validator.Struct(v)
-	//if err != nil {
-	//	Error(w, r, http.StatusBadRequest, err)
-	//	return false
-	//}
+	if o.validator != nil {
+		err := o.validator.v.Struct(v)
+		if err != nil {
+			setAttr(ctx, semconv.ErrorTypeKey.String("validation_error"))
+			o.Err(w, r, http.StatusBadRequest, err)
+			return false
+		}
+	}
 	return true
 }
 

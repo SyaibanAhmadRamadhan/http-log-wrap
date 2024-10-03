@@ -273,7 +273,7 @@ func (o *Opentelemetry) Err(w http.ResponseWriter, r *http.Request, code int, er
 		for _, validationError := range validationErrors {
 			fieldName := validationError.Field()
 			errMsg.Errors[fieldName] = []string{
-				validationError.Error(),
+				validationError.Translate(o.validator.trans),
 			}
 		}
 

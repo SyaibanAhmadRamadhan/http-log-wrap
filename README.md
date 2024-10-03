@@ -10,7 +10,7 @@
 ## Installation
 To install `http-wrapper`, use the following Go command:
 ```shell3
-go get github.com/SyaibanAhmadRamadhan/http-wrapper@v1.241004.0054
+go get github.com/SyaibanAhmadRamadhan/http-wrapper@v1.241004.0100
 ```
 
 ## Tag Versioning Example: `v1.231215.2307`

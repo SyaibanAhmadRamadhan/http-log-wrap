@@ -304,15 +304,16 @@ func (o *Opentelemetry) recoverHandler(writer http.ResponseWriter, request *http
 		semconv.ExceptionTypeKey.String(fmt.Sprintf("%T", r)),
 		semconv.ExceptionMessageKey.String(fmt.Sprintf("%v", r)),
 	)
+	stack := debug.Stack()
 	if r == http.ErrAbortHandler {
 		// we don't recover http.ErrAbortHandler so the response
 		// to the client is aborted, this should not be logged
-		span.RecordError(fmt.Errorf("panic: %v", r))
+		span.RecordError(errors.New(string(stack)))
 		span.End()
 		panic(r)
 	}
 	if !o.recover {
-		span.RecordError(fmt.Errorf("panic: %v", r))
+		span.RecordError(errors.New(string(stack)))
 		span.End()
 		panic(r)
 	}
@@ -326,9 +327,9 @@ func (o *Opentelemetry) recoverHandler(writer http.ResponseWriter, request *http
 	}
 
 	if request.Header.Get("Connection") != "Upgrade" {
-		o.Err(writer, request, http.StatusInternalServerError, fmt.Errorf("panic: %v", r))
+		o.Err(writer, request, http.StatusInternalServerError, errors.New(string(stack)))
 	} else {
-		span.RecordError(fmt.Errorf("panic: %v", r))
+		span.RecordError(errors.New(string(stack)))
 	}
 	span.End()
 }

@@ -51,7 +51,9 @@ func queryParamToSpan(r *http.Request, span trace.Span) {
 		}
 	}
 
-	span.SetAttributes(attribute.String("http.request.query.raw", r.URL.RawQuery))
+	if r.URL.RawQuery != "" {
+		span.SetAttributes(attribute.String("http.request.query.raw", r.URL.RawQuery))
+	}
 	span.SetAttributes(otelAttributes...)
 
 	return

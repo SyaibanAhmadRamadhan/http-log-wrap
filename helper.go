@@ -27,15 +27,19 @@ func StackTrace(err error) error {
 	return fmt.Errorf("%s:%d: %w", frame.Function, frame.Line, err)
 }
 
-func RecordErrorOtel(ctx context.Context, err error) {
+func RecordErrorOtel(ctx context.Context, err error, desc ...string) {
 	span := trace.SpanFromContext(ctx)
 	if !span.IsRecording() {
 		return
 	}
-	
+
 	if err != nil {
 		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
+		if len(desc) > 0 {
+			span.SetStatus(codes.Error, strings.Join(desc, " "))
+		} else {
+			span.SetStatus(codes.Error, "internal server error")
+		}
 	}
 }
 

@@ -18,7 +18,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"io"
 	"net/http"
-	"reflect"
 	"runtime/debug"
 	"strings"
 )
@@ -40,11 +39,10 @@ func WithRecoverMode(logStdOutPanic bool) OptHttpOtelFunc {
 
 func WithValidator(v *validator.Validate, t ut.Translator) OptHttpOtelFunc {
 	return func(opentelemetry *Opentelemetry) {
+		isDefaultValidator := false
 		if v == nil {
-			v = validator.New()
-			v.RegisterTagNameFunc(func(field reflect.StructField) string {
-				return field.Tag.Get("json")
-			})
+			isDefaultValidator = true
+			v = NewValidator()
 		}
 
 		if t == nil {
@@ -53,6 +51,10 @@ func WithValidator(v *validator.Validate, t ut.Translator) OptHttpOtelFunc {
 			trans, _ := uni.GetTranslator("en")
 			_ = en_translations.RegisterDefaultTranslations(v, trans)
 			t = trans
+		}
+
+		if isDefaultValidator {
+			registerTranslations(v, t)
 		}
 
 		opentelemetry.validator = &validate{
